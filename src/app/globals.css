@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --border: #E2E5EB;
+  --border-subtle: #ECEEF2;
+  --text: #0F1729;
+  --text-secondary: #3D4663;
+  --text-muted: #7C839E;
+  --accent: #229c62;
+  --accent-hover: #1b7d4e;
+  --accent-soft: #E8F8EF;
+  --success-bg: #E8F8EF;
+  --success: #0B815A;
+  --error-bg: #FDF0EF;
+  --error: #C13515;
+  --warning-bg: #FEF5E7;
+  --warning: #B76E00;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.04), 0 1px 3px rgba(15, 23, 41, 0.06);
+  --shadow-md: 0 2px 8px rgba(15, 23, 41, 0.06), 0 4px 16px rgba(15, 23, 41, 0.04);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 41, 0.08), 0 16px 48px rgba(15, 23, 41, 0.04);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --font-sans: "DM Sans", -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "DM Sans", -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out forwards;
+}
