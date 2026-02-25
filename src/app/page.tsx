@@ -7,34 +7,19 @@ import {
   X,
   ArrowRight,
   Loader2,
-  Package,
-  Tag,
-  ChevronRight,
   ChevronDown,
   Filter,
   RotateCcw,
   Brain,
 } from "lucide-react";
-import { RRLogo } from "@/components/RRLogo";
-
-interface SearchResult {
-  id: number;
-  name: string;
-  brandName: string;
-  category: string;
-  media: string;
-  tags: string;
-  isNicotine: boolean;
-  isECig: boolean;
-  wholesalePrice?: number;
-  msrp?: number;
-  margin?: number;
-  similarity: number;
-  document: string;
-}
+import { AppHeader } from "@/components/AppHeader";
+import { ProductCard } from "@/components/ProductCard";
+import { ProductDetailModal } from "@/components/ProductDetailModal";
+import type { SearchResult } from "@/lib/types";
 
 interface AIUnderstanding {
   semanticQuery: string;
+  expandedQueries?: string[];
   filters: Record<string, any>;
   explanation: string;
 }
@@ -43,8 +28,8 @@ interface Filters {
   category: string;
   brand: string;
   excludeBrand: string;
-  nicotine: string; // "" | "true" | "false"
-  ecig: string;     // "" | "true" | "false"
+  nicotine: string;
+  ecig: string;
 }
 
 const EXAMPLE_QUERIES = [
@@ -73,9 +58,7 @@ export default function Home() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<SearchResult | null>(
-    null
-  );
+  const [selectedProduct, setSelectedProduct] = useState<SearchResult | null>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
@@ -83,7 +66,6 @@ export default function Home() {
   const [understanding, setUnderstanding] = useState<AIUnderstanding | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load filter options on mount
   useEffect(() => {
     fetch("/api/filters")
       .then((res) => res.json())
@@ -156,36 +138,9 @@ export default function Home() {
     setFilters(DEFAULT_FILTERS);
   }, []);
 
-  const similarityColor = (s: number) => {
-    if (s >= 0.6) return "text-[var(--success)] bg-[var(--success-bg)]";
-    if (s >= 0.45) return "text-[var(--warning)] bg-[var(--warning-bg)]";
-    return "text-[var(--text-muted)] bg-[var(--bg)]";
-  };
-
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      {/* Header */}
-      <header className="bg-[var(--surface)] border-b border-[var(--border)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
-              <RRLogo size={20} fill="white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-[var(--text)]">
-                RepRally
-              </h1>
-              <p className="text-xs text-[var(--text-muted)] -mt-0.5">
-                Semantic Product Search
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-            <Package className="w-3.5 h-3.5" />
-            2,461 products indexed
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {/* Search Bar */}
@@ -261,97 +216,47 @@ export default function Home() {
         {showFilters && (
           <div className="mt-2 bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 animate-fade-in">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Category */}
               <div>
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">
-                  Category
-                </label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
-                >
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Category</label>
+                <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors">
                   <option value="">All categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
-
-              {/* Brand */}
               <div>
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">
-                  Brand
-                </label>
-                <select
-                  value={filters.brand}
-                  onChange={(e) => setFilters({ ...filters, brand: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
-                >
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Brand</label>
+                <select value={filters.brand} onChange={(e) => setFilters({ ...filters, brand: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors">
                   <option value="">All brands</option>
-                  {brands.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
+                  {brands.map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
-
-              {/* Exclude Brand */}
               <div>
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">
-                  Exclude Brand
-                </label>
-                <select
-                  value={filters.excludeBrand}
-                  onChange={(e) => setFilters({ ...filters, excludeBrand: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
-                >
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Exclude Brand</label>
+                <select value={filters.excludeBrand} onChange={(e) => setFilters({ ...filters, excludeBrand: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors">
                   <option value="">None</option>
-                  {brands.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
+                  {brands.map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
-
-              {/* Nicotine */}
               <div>
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">
-                  Nicotine
-                </label>
-                <select
-                  value={filters.nicotine}
-                  onChange={(e) => setFilters({ ...filters, nicotine: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
-                >
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Nicotine</label>
+                <select value={filters.nicotine} onChange={(e) => setFilters({ ...filters, nicotine: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors">
                   <option value="">Any</option>
                   <option value="true">Nicotine only</option>
                   <option value="false">Exclude nicotine</option>
                 </select>
               </div>
-
-              {/* E-Cig / Vape */}
               <div>
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">
-                  E-Cig / Vape
-                </label>
-                <select
-                  value={filters.ecig}
-                  onChange={(e) => setFilters({ ...filters, ecig: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
-                >
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">E-Cig / Vape</label>
+                <select value={filters.ecig} onChange={(e) => setFilters({ ...filters, ecig: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors">
                   <option value="">Any</option>
                   <option value="true">E-Cig only</option>
                   <option value="false">Exclude e-cig</option>
                 </select>
               </div>
             </div>
-
-            {/* Apply button */}
             {meta && (
               <div className="mt-3 flex justify-end">
-                <button
-                  onClick={() => handleSearch()}
-                  className="px-4 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-medium transition-colors"
-                >
+                <button onClick={() => handleSearch()} className="px-4 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-medium transition-colors">
                   Apply Filters
                 </button>
               </div>
@@ -365,9 +270,7 @@ export default function Home() {
             <div className="flex items-start gap-2">
               <Brain className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-purple-700">
-                  {understanding.explanation}
-                </p>
+                <p className="text-xs text-purple-700">{understanding.explanation}</p>
                 {understanding.semanticQuery !== meta.query && (
                   <p className="text-[11px] text-purple-500 mt-1">
                     Searching: &ldquo;{understanding.semanticQuery}&rdquo;
@@ -375,16 +278,21 @@ export default function Home() {
                 )}
                 {Object.keys(understanding.filters).filter(k => understanding.filters[k] != null).length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {Object.entries(understanding.filters)
-                      .filter(([, v]) => v != null)
-                      .map(([key, value]) => (
-                        <span
-                          key={key}
-                          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-600"
-                        >
-                          {key}: {String(value)}
-                        </span>
-                      ))}
+                    {Object.entries(understanding.filters).filter(([, v]) => v != null).map(([key, value]) => (
+                      <span key={key} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-600">
+                        {key}: {String(value)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {understanding.expandedQueries && understanding.expandedQueries.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    <span className="text-[10px] text-purple-400 self-center">Also searching:</span>
+                    {understanding.expandedQueries.map((eq, i) => (
+                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-500 border border-purple-200">
+                        {eq}
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
@@ -420,57 +328,13 @@ export default function Home() {
         {results.length > 0 && (
           <div className="mt-4 grid gap-3">
             {results.map((product, i) => (
-              <button
+              <ProductCard
                 key={product.id}
-                onClick={() => setSelectedProduct(product)}
-                className="animate-slide-up bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 flex items-center gap-4 text-left hover:border-[var(--accent)] hover:shadow-[var(--shadow-md)] transition-all group cursor-pointer"
-                style={{ animationDelay: `${i * 30}ms`, opacity: 0 }}
-              >
-                {/* Rank */}
-                <div className="w-7 h-7 rounded-full bg-[var(--bg)] flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-[var(--text-muted)]">
-                    {i + 1}
-                  </span>
-                </div>
-
-                {/* Image */}
-                {product.media ? (
-                  <img
-                    src={product.media}
-                    alt={product.name}
-                    className="w-14 h-14 rounded-lg object-contain bg-[var(--bg)]"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-[var(--bg)] flex items-center justify-center">
-                    <Package className="w-5 h-5 text-[var(--text-muted)]" />
-                  </div>
-                )}
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--text)] truncate">
-                    {product.name}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                    {product.brandName || "Unknown brand"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    {product.category && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--accent-soft)] text-[var(--accent)]">
-                        {product.category}
-                      </span>
-                    )}
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${similarityColor(product.similarity)}`}
-                    >
-                      {(product.similarity * 100).toFixed(0)}% match
-                    </span>
-                  </div>
-                </div>
-
-                {/* Arrow */}
-                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors shrink-0" />
-              </button>
+                product={product}
+                rank={i + 1}
+                animationDelay={i * 30}
+                onClick={setSelectedProduct}
+              />
             ))}
           </div>
         )}
@@ -489,9 +353,7 @@ export default function Home() {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--surface)] border border-[var(--border-subtle)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] text-left text-sm text-[var(--text-secondary)] transition-all group"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                  <span className="group-hover:text-[var(--text)]">
-                    {example}
-                  </span>
+                  <span className="group-hover:text-[var(--text)]">{example}</span>
                 </button>
               ))}
             </div>
@@ -502,133 +364,19 @@ export default function Home() {
         {meta && results.length === 0 && !loading && (
           <div className="mt-12 text-center animate-fade-in">
             <Search className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
-            <p className="text-sm font-medium text-[var(--text)]">
-              No results found
-            </p>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              Try a different description of what the store needs
-            </p>
+            <p className="text-sm font-medium text-[var(--text)]">No results found</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Try a different description of what the store needs</p>
           </div>
         )}
       </main>
 
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedProduct(null)}
-        >
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40 animate-fade-in" />
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
 
-          {/* Modal */}
-          <div
-            className="relative bg-[var(--surface)] rounded-2xl shadow-[var(--shadow-lg)] max-w-2xl w-full max-h-[85vh] overflow-y-auto animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close */}
-            <button
-              onClick={() => setSelectedProduct(null)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--bg)] hover:bg-[var(--border)] flex items-center justify-center transition-colors z-10"
-            >
-              <X className="w-4 h-4 text-[var(--text-muted)]" />
-            </button>
-
-            {/* Product image */}
-            <div className="bg-[var(--bg)] rounded-t-2xl p-8 flex items-center justify-center min-h-[240px]">
-              {selectedProduct.media ? (
-                <img
-                  src={selectedProduct.media}
-                  alt={selectedProduct.name}
-                  className="max-h-[220px] object-contain"
-                />
-              ) : (
-                <Package className="w-16 h-16 text-[var(--text-muted)]" />
-              )}
-            </div>
-
-            {/* Product info */}
-            <div className="p-6">
-              {/* Match badge */}
-              <div className="flex items-center gap-2 mb-3">
-                <span
-                  className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${similarityColor(selectedProduct.similarity)}`}
-                >
-                  {(selectedProduct.similarity * 100).toFixed(0)}% match
-                </span>
-                {selectedProduct.category && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--accent-soft)] text-[var(--accent)]">
-                    {selectedProduct.category}
-                  </span>
-                )}
-              </div>
-
-              <h2 className="text-xl font-semibold text-[var(--text)]">
-                {selectedProduct.name}
-              </h2>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
-                by {selectedProduct.brandName || "Unknown brand"}
-              </p>
-
-              {/* Tags */}
-              {selectedProduct.tags && (
-                <div className="mt-4">
-                  <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                    Tags
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedProduct.tags.split(", ").map((tag, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded text-[11px] bg-[var(--bg)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Parsed product details from embedded document */}
-              {selectedProduct.document && (() => {
-                const lines = selectedProduct.document.split("\n").filter(Boolean);
-                const skipKeys = ["Product", "Brand", "Category", "Tags"];
-                const details = lines
-                  .map((line) => {
-                    const idx = line.indexOf(": ");
-                    if (idx === -1) return null;
-                    return { label: line.slice(0, idx).trim(), value: line.slice(idx + 2).trim() };
-                  })
-                  .filter((d): d is { label: string; value: string } => d !== null && !skipKeys.includes(d.label));
-
-                if (details.length === 0) return null;
-
-                return (
-                  <div className="mt-5 space-y-3">
-                    <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                      Product Details
-                    </p>
-                    {details.map((detail, i) => (
-                      <div key={i} className="bg-[var(--bg)] rounded-lg p-3 border border-[var(--border-subtle)]">
-                        <p className="text-[10px] font-semibold text-[var(--accent)] uppercase tracking-wider mb-1">
-                          {detail.label}
-                        </p>
-                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                          {detail.value}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
       <footer className="mt-12 pb-8 text-center text-xs text-[var(--text-muted)]">
-        RepRally &middot; Semantic Product Search
+        RepRally &middot; AI Product Intelligence
       </footer>
     </div>
   );
