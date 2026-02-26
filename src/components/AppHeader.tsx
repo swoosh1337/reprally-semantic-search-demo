@@ -8,6 +8,7 @@ import { RRLogo } from "@/components/RRLogo";
 const NAV_ITEMS = [
   { href: "/", label: "Search" },
   { href: "/store-intel", label: "Store Intel" },
+  { href: "/rep-assistant", label: "Rep Assistant" },
 ];
 
 export function AppHeader() {

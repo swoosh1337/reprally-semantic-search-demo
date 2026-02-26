@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["chromadb"],
+  serverExternalPackages: ["chromadb", "mysql2"],
 };
 
 export default nextConfig;
